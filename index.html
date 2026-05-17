@@ -776,6 +776,15 @@ body::after {
 .cf select option { background: var(--paper); }
 .cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 
+.cf-error {
+  font-family: 'Fragment Mono', monospace;
+  font-size: .6rem;
+  color: var(--rouge);
+  line-height: 1.8;
+  letter-spacing: .04em;
+}
+.cf-error a { color: var(--rouge); }
+
 .submit {
   display: inline-flex;
   align-items: center;
@@ -789,11 +798,49 @@ body::after {
   letter-spacing: .2em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background .25s;
+  transition: background .25s, opacity .25s;
   align-self: flex-start;
 }
-.submit:hover { background: var(--ink); }
+.submit:hover:not(:disabled) { background: var(--ink); }
+.submit:disabled { opacity: .55; cursor: not-allowed; }
 .submit::after { content: '→'; }
+
+/* ── SUCCESS STATE ── */
+.contact-success {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 0;
+  animation: fadeUp .6s cubic-bezier(.25,.1,.25,1) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+.cs-icon {
+  font-size: 2rem;
+  color: var(--rouge);
+  font-family: 'Fragment Mono', monospace;
+  margin-bottom: 1.5rem;
+  line-height: 1;
+}
+.cs-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: .95;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  letter-spacing: .02em;
+}
+.cs-sub {
+  font-family: 'Fragment Mono', monospace;
+  font-size: .65rem;
+  color: var(--dim);
+  letter-spacing: .06em;
+  line-height: 1.8;
+}
+.cs-sub b { color: var(--sepia); font-weight: 400; }
 
 /* ── FOOTER ── */
 .footer {
@@ -1159,6 +1206,13 @@ body::after {
     </div>
   </div>
 
+  <!-- Message de succès (caché par défaut) -->
+  <div class="contact-success" id="contactSuccess" aria-live="polite" style="display:none">
+    <div class="cs-icon">✓</div>
+    <p class="cs-title">Message envoyé.</p>
+    <p class="cs-sub">Younes vous répondra sous 24h — <b>reycomstudio@gmail.com</b></p>
+  </div>
+
   <form class="contact-form" id="contactForm" novalidate>
     <div class="cf-row">
       <div class="cf"><label for="prenom">Prénom</label><input id="prenom" name="prenom" type="text" placeholder="Votre prénom" required autocomplete="given-name"></div>
@@ -1179,6 +1233,8 @@ body::after {
       </select>
     </div>
     <div class="cf"><label for="message">Message</label><textarea id="message" name="message" placeholder="Décrivez votre projet, votre calendrier, vos attentes..." required></textarea></div>
+    <!-- Message d'erreur réseau (caché par défaut) -->
+    <p class="cf-error" id="formError" style="display:none">Erreur d'envoi. Réessayez ou écrivez directement à <a href="mailto:reycomstudio@gmail.com">reycomstudio@gmail.com</a>.</p>
     <button class="submit" id="sendBtn" type="submit">Envoyer</button>
   </form>
 
@@ -1232,11 +1288,22 @@ const obs = new IntersectionObserver(entries => {
 }, { threshold: 0.06, rootMargin: '0px 0px -30px 0px' });
 els.forEach(el => obs.observe(el));
 
-/* ── form validation + feedback ── */
-const form = document.getElementById('contactForm');
-const sendBtn = document.getElementById('sendBtn');
-form.addEventListener('submit', function(e) {
+/* ── form : envoi réel via Formspree ── */
+const form      = document.getElementById('contactForm');
+const sendBtn   = document.getElementById('sendBtn');
+const formError = document.getElementById('formError');
+const successEl = document.getElementById('contactSuccess');
+
+/* ── IMPORTANT : remplacez VOTRE_ID par l'ID Formspree ──
+   Créez un compte gratuit sur https://formspree.io
+   → New Form → récupérez l'ID (ex: xpwzabcd)
+   → Remplacez VOTRE_ID ci-dessous                        */
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xaqkwkoj';
+
+form.addEventListener('submit', async function(e) {
   e.preventDefault();
+  formError.style.display = 'none';
+
   /* validation manuelle */
   const required = form.querySelectorAll('[required]');
   let valid = true;
@@ -1248,16 +1315,34 @@ form.addEventListener('submit', function(e) {
     }
   });
   if (!valid) return;
-  /* feedback visuel */
-  sendBtn.textContent = 'Envoyé ✓';
-  sendBtn.style.background = '#2a2520';
+
+  /* état chargement */
+  sendBtn.textContent = 'Envoi...';
   sendBtn.disabled = true;
-  setTimeout(() => {
+
+  try {
+    const data = new FormData(form);
+    const res  = await fetch(FORMSPREE_ENDPOINT, {
+      method : 'POST',
+      body   : data,
+      headers: { Accept: 'application/json' }
+    });
+
+    if (res.ok) {
+      /* succès : masquer formulaire, afficher message */
+      form.style.display = 'none';
+      successEl.style.display = 'flex';
+    } else {
+      const json = await res.json().catch(() => ({}));
+      throw new Error(json.error || 'Erreur serveur');
+    }
+  } catch (err) {
+    /* erreur réseau ou serveur */
+    formError.style.display = 'block';
     sendBtn.textContent = 'Envoyer';
-    sendBtn.style.background = '';
     sendBtn.disabled = false;
-    form.reset();
-  }, 4000);
+    console.error('Formspree error:', err);
+  }
 });
 </script>
 </body>
