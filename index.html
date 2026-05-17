@@ -437,7 +437,8 @@ body::after {
   overflow: hidden;
   transition: max-height .55s cubic-bezier(.25,.1,.25,1);
 }
-.entry:hover .entry-reveal { max-height: 420px; }
+.entry:hover .entry-reveal,
+.entry.open .entry-reveal { max-height: 420px; }
 
 .entry-img {
   width: 100%;
@@ -804,6 +805,30 @@ body::after {
 .submit:hover:not(:disabled) { background: var(--ink); }
 .submit:disabled { opacity: .55; cursor: not-allowed; }
 .submit::after { content: '→'; }
+
+.submit-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--paper2);
+  padding: .9rem 2.5rem;
+  font-family: 'Fragment Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .25s, color .25s, border-color .25s;
+  text-decoration: none;
+  align-self: flex-start;
+}
+.submit-wa:hover {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+.submit-wa::after { content: '→'; }
 
 /* ── SUCCESS STATE ── */
 .contact-success {
@@ -1200,6 +1225,7 @@ body::after {
     <h2 class="contact-h">Donnez<br>vie à<br>votre<br>projet.</h2>
     <div class="contact-entries">
       <div class="ce"><span class="ce-k">Email</span><span class="ce-v"><a href="mailto:reycomstudio@gmail.com">reycomstudio@gmail.com</a></span></div>
+      <div class="ce"><span class="ce-k">WhatsApp</span><span class="ce-v"><a href="https://wa.me/212600000000" target="_blank" rel="noopener noreferrer">+212 6 00 00 00 00</a></span></div>
       <div class="ce"><span class="ce-k">Instagram</span><span class="ce-v"><a href="https://instagram.com/yucelenderr" target="_blank" rel="noopener noreferrer" aria-label="Instagram de Younes Edhar (nouvelle fenêtre)">@yucelenderr</a></span></div>
       <div class="ce"><span class="ce-k">Localisation</span><span class="ce-v">Casablanca, Maroc</span></div>
       <div class="ce"><span class="ce-k">Disponible</span><span class="ce-v">Lun — Sam · sur rdv</span></div>
@@ -1213,7 +1239,7 @@ body::after {
     <p class="cs-sub">Younes vous répondra sous 24h — <b>reycomstudio@gmail.com</b></p>
   </div>
 
-  <form class="contact-form" id="contactForm" novalidate>
+  <form class="contact-form" id="contactForm" action="https://formspree.io/f/xkoeweyk" method="POST" novalidate>
     <div class="cf-row">
       <div class="cf"><label for="prenom">Prénom</label><input id="prenom" name="prenom" type="text" placeholder="Votre prénom" required autocomplete="given-name"></div>
       <div class="cf"><label for="nom">Nom</label><input id="nom" name="nom" type="text" placeholder="Votre nom" required autocomplete="family-name"></div>
@@ -1235,7 +1261,10 @@ body::after {
     <div class="cf"><label for="message">Message</label><textarea id="message" name="message" placeholder="Décrivez votre projet, votre calendrier, vos attentes..." required></textarea></div>
     <!-- Message d'erreur réseau (caché par défaut) -->
     <p class="cf-error" id="formError" style="display:none">Erreur d'envoi. Réessayez ou écrivez directement à <a href="mailto:reycomstudio@gmail.com">reycomstudio@gmail.com</a>.</p>
-    <button class="submit" id="sendBtn" type="submit">Envoyer</button>
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+      <button class="submit" id="sendBtn" type="submit">Envoyer</button>
+      <a class="submit-wa" href="https://wa.me/212600000000" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+    </div>
   </form>
 
 </section>
@@ -1245,6 +1274,7 @@ body::after {
   <span class="footer-l"><b>Younes Edhar</b> · Yucelenderr Studio · Casablanca</span>
   <div class="footer-r">
     <a href="https://instagram.com/yucelenderr" target="_blank" rel="noopener noreferrer" aria-label="Instagram (nouvelle fenêtre)">Instagram</a>
+    <a href="https://wa.me/212600000000" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp (nouvelle fenêtre)">WhatsApp</a>
     <a href="mailto:reycomstudio@gmail.com">Email</a>
     <span style="font-size:.5rem;letter-spacing:.1em;color:#2a2520">© 2026 Younes Edhar · Casablanca, Maroc</span>
   </div>
@@ -1343,6 +1373,17 @@ form.addEventListener('submit', async function(e) {
     sendBtn.disabled = false;
     console.error('Formspree error:', err);
   }
+});
+
+/* ── PORTFOLIO INTERACTIF SUR MOBILE / ÉCRANS TACTILES ── */
+document.querySelectorAll('.entry').forEach(entry => {
+  entry.addEventListener('click', function(e) {
+    const isOpen = this.classList.contains('open');
+    document.querySelectorAll('.entry').forEach(el => el.classList.remove('open'));
+    if (!isOpen) {
+      this.classList.add('open');
+    }
+  });
 });
 </script>
 </body>
